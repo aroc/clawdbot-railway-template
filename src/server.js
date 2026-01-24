@@ -48,7 +48,13 @@ const INTERNAL_GATEWAY_PORT = Number.parseInt(process.env.INTERNAL_GATEWAY_PORT 
 const INTERNAL_GATEWAY_HOST = process.env.INTERNAL_GATEWAY_HOST ?? "127.0.0.1";
 const GATEWAY_TARGET = `http://${INTERNAL_GATEWAY_HOST}:${INTERNAL_GATEWAY_PORT}`;
 
-const CLAWDBOT_BIN = process.env.CLAWDBOT_BIN?.trim() || "clawdbot";
+// Always run the built-from-source CLI entry directly to avoid PATH/global-install mismatches.
+const CLAWDBOT_ENTRY = process.env.CLAWDBOT_ENTRY?.trim() || "/clawdbot/dist/entry.js";
+const CLAWDBOT_NODE = process.env.CLAWDBOT_NODE?.trim() || "node";
+
+function clawArgs(args) {
+  return [CLAWDBOT_ENTRY, ...args];
+}
 
 function configPath() {
   return process.env.CLAWDBOT_CONFIG_PATH?.trim() || path.join(STATE_DIR, "clawdbot.json");
@@ -85,7 +91,7 @@ function startGatewayIfNeeded() {
     CLAWDBOT_GATEWAY_TOKEN
   ];
 
-  gatewayProc = childProcess.spawn(CLAWDBOT_BIN, args, {
+  gatewayProc = childProcess.spawn(CLAWDBOT_NODE, clawArgs(args), {
     stdio: "inherit",
     env: {
       ...process.env,
@@ -233,8 +239,8 @@ app.get("/setup", requireSetupAuth, (_req, res) => {
 });
 
 app.get("/setup/api/status", requireSetupAuth, async (_req, res) => {
-  const version = await runCmd(CLAWDBOT_BIN, ["--version"]);
-  const channelsHelp = await runCmd(CLAWDBOT_BIN, ["channels", "add", "--help"]);
+  const version = await runCmd(CLAWDBOT_NODE, clawArgs(["--version"]));
+  const channelsHelp = await runCmd(CLAWDBOT_NODE, clawArgs(["channels", "add", "--help"]));
 
   // We reuse Clawdbot's own auth-choice grouping logic indirectly by hardcoding the same group defs.
   // This is intentionally minimal; later we can parse the CLI help output to stay perfectly in sync.
@@ -386,7 +392,7 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
 
   const payload = req.body || {};
   const onboardArgs = buildOnboardArgs(payload);
-  const onboard = await runCmd(CLAWDBOT_BIN, onboardArgs);
+  const onboard = await runCmd(CLAWDBOT_NODE, clawArgs(onboardArgs));
 
   let extra = "";
 
@@ -396,12 +402,12 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
   if (ok) {
     // Ensure gateway token is written into config so the browser UI can authenticate reliably.
     // (We also enforce loopback bind since the wrapper proxies externally.)
-    await runCmd(CLAWDBOT_BIN, ["config", "set", "gateway.auth.mode", "token"]);
-    await runCmd(CLAWDBOT_BIN, ["config", "set", "gateway.auth.token", CLAWDBOT_GATEWAY_TOKEN]);
-    await runCmd(CLAWDBOT_BIN, ["config", "set", "gateway.bind", "loopback"]);
-    await runCmd(CLAWDBOT_BIN, ["config", "set", "gateway.port", String(INTERNAL_GATEWAY_PORT)]);
+    await runCmd(CLAWDBOT_NODE, clawArgs(["config", "set", "gateway.auth.mode", "token"]));
+    await runCmd(CLAWDBOT_NODE, clawArgs(["config", "set", "gateway.auth.token", CLAWDBOT_GATEWAY_TOKEN]));
+    await runCmd(CLAWDBOT_NODE, clawArgs(["config", "set", "gateway.bind", "loopback"]));
+    await runCmd(CLAWDBOT_NODE, clawArgs(["config", "set", "gateway.port", String(INTERNAL_GATEWAY_PORT)]));
 
-    const channelsHelp = await runCmd(CLAWDBOT_BIN, ["channels", "add", "--help"]);
+    const channelsHelp = await runCmd(CLAWDBOT_NODE, clawArgs(["channels", "add", "--help"]));
     const helpText = channelsHelp.output || "";
 
     const supports = (name) => helpText.includes(name);
@@ -410,14 +416,14 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
       if (!supports("telegram")) {
         extra += "\n[telegram] skipped (this clawdbot build does not list telegram in `channels add --help`)\n";
       } else {
-        const r = await runCmd(CLAWDBOT_BIN, [
+        const r = await runCmd(CLAWDBOT_NODE, clawArgs([
           "channels",
           "add",
           "--channel",
           "telegram",
           "--token",
           payload.telegramToken.trim(),
-        ]);
+        ]));
         extra += `\n[telegram] exit=${r.code}\n${r.output}`;
       }
     }
@@ -426,14 +432,14 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
       if (!supports("discord")) {
         extra += "\n[discord] skipped (this clawdbot build does not list discord in `channels add --help`)\n";
       } else {
-        const r = await runCmd(CLAWDBOT_BIN, [
+        const r = await runCmd(CLAWDBOT_NODE, clawArgs([
           "channels",
           "add",
           "--channel",
           "discord",
           "--token",
           payload.discordToken.trim(),
-        ]);
+        ]));
         extra += `\n[discord] exit=${r.code}\n${r.output}`;
       }
     }
@@ -445,7 +451,7 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
         const args = ["channels", "add", "--channel", "slack"];
         if (payload.slackBotToken?.trim()) args.push("--bot-token", payload.slackBotToken.trim());
         if (payload.slackAppToken?.trim()) args.push("--app-token", payload.slackAppToken.trim());
-        const r = await runCmd(CLAWDBOT_BIN, args);
+        const r = await runCmd(CLAWDBOT_NODE, clawArgs(args));
         extra += `\n[slack] exit=${r.code}\n${r.output}`;
       }
     }
