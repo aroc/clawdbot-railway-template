@@ -49,6 +49,8 @@ ENV NODE_ENV=production
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ca-certificates \
+    curl \
+  && curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.tgz | tar xz -C /usr/local/bin \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Playwright with its bundled Chromium and system deps
