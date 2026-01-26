@@ -51,6 +51,9 @@ RUN apt-get update \
     ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
+# Install Playwright with its bundled Chromium and system deps
+RUN npm install -g playwright && npx playwright install --with-deps chromium
+
 WORKDIR /app
 
 # Wrapper deps
