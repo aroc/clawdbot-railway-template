@@ -45,15 +45,18 @@ RUN apt-get update \
 # Install Playwright with bundled Chromium for browser automation
 RUN npm install -g playwright && npx playwright install --with-deps chromium
 
+# Install Claude Code CLI for debugging and maintenance
+RUN npm install -g @anthropic-ai/claude-code
+
 WORKDIR /app
 # Wrapper deps
 COPY package.json ./
 RUN npm install --omit=dev && npm cache clean --force
 # Copy built clawdbot
 COPY --from=clawdbot-build /clawdbot /clawdbot
-# Provide a clawdbot executable
-RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /clawdbot/dist/entry.js "$@"' > /usr/local/bin/clawdbot \
-  && chmod +x /usr/local/bin/clawdbot
+# Provide an openclaw executable
+RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /clawdbot/dist/entry.js "$@"' > /usr/local/bin/openclaw \
+  && chmod +x /usr/local/bin/openclaw
 COPY src ./src
 ENV PORT=8080
 EXPOSE 8080
