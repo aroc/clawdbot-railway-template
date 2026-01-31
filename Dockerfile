@@ -57,6 +57,9 @@ RUN npm install -g playwright && npx playwright install --with-deps chromium
 # Install Claude Code CLI for debugging and maintenance
 RUN npm install -g @anthropic-ai/claude-code
 
+# Install Bird CLI for Twitter/X integration (https://github.com/steipete/bird)
+RUN npm install -g @steipete/bird
+
 WORKDIR /app
 # Wrapper deps
 COPY package.json ./
