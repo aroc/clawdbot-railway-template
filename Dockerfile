@@ -60,6 +60,9 @@ RUN npm install -g @anthropic-ai/claude-code
 # Install Bird CLI for Twitter/X integration (https://github.com/steipete/bird)
 RUN npm install -g @steipete/bird
 
+# Install gog CLI for Google services - Gmail, Calendar, Drive (https://github.com/steipete/gogcli)
+RUN curl -sL https://github.com/steipete/gogcli/releases/download/v0.9.0/gogcli_0.9.0_linux_amd64.tar.gz | tar -xz -C /usr/local/bin gog
+
 WORKDIR /app
 # Wrapper deps
 COPY package.json ./
