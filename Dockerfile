@@ -15,8 +15,8 @@ RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:${PATH}"
 RUN corepack enable
 WORKDIR /clawdbot
-# Pin to a known ref (tag/branch). Updated to OpenClaw v2026.1.29.
-ARG CLAWDBOT_GIT_REF=v2026.1.29
+# Pin to a known ref (tag/branch). Updated to OpenClaw v2026.1.30 (compaction fix).
+ARG CLAWDBOT_GIT_REF=v2026.1.30
 RUN git clone --depth 1 --branch "${CLAWDBOT_GIT_REF}" https://github.com/openclaw/openclaw.git .
 # Patch: relax version requirements for packages that may reference unpublished versions.
 # Scope this narrowly to avoid surprising dependency mutations.
@@ -56,6 +56,12 @@ RUN npm install -g playwright && npx playwright install --with-deps chromium
 
 # Install Claude Code CLI for debugging and maintenance
 RUN npm install -g @anthropic-ai/claude-code
+
+# Install Bird CLI for Twitter/X integration (https://github.com/steipete/bird)
+RUN npm install -g @steipete/bird
+
+# Install gog CLI for Google services - Gmail, Calendar, Drive (https://github.com/steipete/gogcli)
+RUN curl -sL https://github.com/steipete/gogcli/releases/download/v0.9.0/gogcli_0.9.0_linux_amd64.tar.gz | tar -xz -C /usr/local/bin gog
 
 WORKDIR /app
 # Wrapper deps
