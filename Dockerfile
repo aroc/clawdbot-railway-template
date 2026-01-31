@@ -40,10 +40,22 @@ ENV NODE_ENV=production
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ca-certificates \
+    curl \
+    gnupg \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install ngrok for tunneling
+RUN curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null \
+  && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | tee /etc/apt/sources.list.d/ngrok.list \
+  && apt-get update \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ngrok \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Playwright with bundled Chromium for browser automation
 RUN npm install -g playwright && npx playwright install --with-deps chromium
+
+# Install Claude Code CLI for debugging and maintenance
+RUN npm install -g @anthropic-ai/claude-code
 
 WORKDIR /app
 # Wrapper deps
@@ -51,9 +63,9 @@ COPY package.json ./
 RUN npm install --omit=dev && npm cache clean --force
 # Copy built clawdbot
 COPY --from=clawdbot-build /clawdbot /clawdbot
-# Provide a clawdbot executable
-RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /clawdbot/dist/entry.js "$@"' > /usr/local/bin/clawdbot \
-  && chmod +x /usr/local/bin/clawdbot
+# Provide an openclaw executable
+RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /clawdbot/dist/entry.js "$@"' > /usr/local/bin/openclaw \
+  && chmod +x /usr/local/bin/openclaw
 COPY src ./src
 ENV PORT=8080
 EXPOSE 8080
