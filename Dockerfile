@@ -15,9 +15,11 @@ RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:${PATH}"
 RUN corepack enable
 WORKDIR /clawdbot
-# Pin to a known ref (tag/branch). Updated to OpenClaw v2026.1.30 (compaction fix).
-ARG CLAWDBOT_GIT_REF=v2026.1.30
-RUN git clone --depth 1 --branch "${CLAWDBOT_GIT_REF}" https://github.com/openclaw/openclaw.git .
+# Pin to a known ref (tag/branch/SHA). Updated to OpenClaw commit from 2026-02-02.
+# Revert to v2026.1.30 if stability issues arise.
+ARG CLAWDBOT_GIT_REF=e25f8ed56c3dad7a79a5277ae8e633ce1bd732da
+# Clone then checkout (supports SHA, branch, or tag - unlike --branch which only does branch/tag)
+RUN git clone https://github.com/openclaw/openclaw.git . && git checkout "${CLAWDBOT_GIT_REF}"
 # Patch: relax version requirements for packages that may reference unpublished versions.
 # Scope this narrowly to avoid surprising dependency mutations.
 RUN set -eux; \
