@@ -10,8 +10,8 @@ import * as tar from "tar";
 
 // Railway commonly sets PORT=8080 for HTTP services.
 const PORT = Number.parseInt(process.env.PORT ?? "8080", 10);
-const STATE_DIR = process.env.CLAWDBOT_STATE_DIR?.trim() || path.join(os.homedir(), ".clawdbot");
-const WORKSPACE_DIR = process.env.CLAWDBOT_WORKSPACE_DIR?.trim() || path.join(STATE_DIR, "workspace");
+const STATE_DIR = process.env.CLAWDBOT_STATE_DIR?.trim() || process.env.OPENCLAW_STATE_DIR?.trim() || path.join(os.homedir(), ".openclaw");
+const WORKSPACE_DIR = process.env.CLAWDBOT_WORKSPACE_DIR?.trim() || process.env.OPENCLAW_WORKSPACE_DIR?.trim() || path.join(STATE_DIR, "workspace");
 
 // Protect /setup with a user-provided password.
 const SETUP_PASSWORD = process.env.SETUP_PASSWORD?.trim();
@@ -19,7 +19,7 @@ const SETUP_PASSWORD = process.env.SETUP_PASSWORD?.trim();
 // Gateway admin token (protects Clawdbot gateway + Control UI).
 // Must be stable across restarts. If not provided via env, persist it in the state dir.
 function resolveGatewayToken() {
-  const envTok = process.env.CLAWDBOT_GATEWAY_TOKEN?.trim();
+  const envTok = process.env.CLAWDBOT_GATEWAY_TOKEN?.trim() || process.env.OPENCLAW_GATEWAY_TOKEN?.trim();
   if (envTok) return envTok;
 
   const tokenPath = path.join(STATE_DIR, "gateway.token");
@@ -57,7 +57,14 @@ function clawArgs(args) {
 }
 
 function configPath() {
-  return process.env.CLAWDBOT_CONFIG_PATH?.trim() || path.join(STATE_DIR, "clawdbot.json");
+  const explicit = process.env.CLAWDBOT_CONFIG_PATH?.trim() || process.env.OPENCLAW_CONFIG_PATH?.trim();
+  if (explicit) return explicit;
+  // OpenClaw ≥2026.2.10 writes openclaw.json; older versions wrote clawdbot.json.
+  const openclawPath = path.join(STATE_DIR, "openclaw.json");
+  const legacyPath = path.join(STATE_DIR, "clawdbot.json");
+  if (fs.existsSync(openclawPath)) return openclawPath;
+  if (fs.existsSync(legacyPath)) return legacyPath;
+  return openclawPath; // default for new installs
 }
 
 function isConfigured() {
@@ -116,7 +123,9 @@ async function startGateway() {
     env: {
       ...process.env,
       CLAWDBOT_STATE_DIR: STATE_DIR,
+        OPENCLAW_STATE_DIR: STATE_DIR,
       CLAWDBOT_WORKSPACE_DIR: WORKSPACE_DIR,
+        OPENCLAW_WORKSPACE_DIR: WORKSPACE_DIR,
     },
   });
 
@@ -416,7 +425,9 @@ function runCmd(cmd, args, opts = {}) {
       env: {
         ...process.env,
         CLAWDBOT_STATE_DIR: STATE_DIR,
+        OPENCLAW_STATE_DIR: STATE_DIR,
         CLAWDBOT_WORKSPACE_DIR: WORKSPACE_DIR,
+        OPENCLAW_WORKSPACE_DIR: WORKSPACE_DIR,
       },
     });
 
