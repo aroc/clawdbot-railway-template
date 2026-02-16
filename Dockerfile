@@ -42,6 +42,8 @@ RUN apt-get update \
     ca-certificates \
     curl \
     gnupg \
+    jq \
+    ripgrep \
   && rm -rf /var/lib/apt/lists/*
 
 # Install ngrok for tunneling
@@ -59,6 +61,12 @@ RUN npm install -g @anthropic-ai/claude-code
 
 # Install Bird CLI for Twitter/X integration (https://github.com/steipete/bird)
 RUN npm install -g @steipete/bird
+
+# Install Todoist CLI for task management
+RUN npm install -g todoist-ts-cli@^0.2.0
+
+# Install trash-cli for safe file deletion (recoverable rm)
+RUN npm install -g trash-cli
 
 # Install gog CLI for Google services - Gmail, Calendar, Drive (https://github.com/steipete/gogcli)
 RUN curl -sL https://github.com/steipete/gogcli/releases/download/v0.9.0/gogcli_0.9.0_linux_amd64.tar.gz | tar -xz -C /usr/local/bin gog
