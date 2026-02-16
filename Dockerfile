@@ -15,8 +15,8 @@ RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:${PATH}"
 RUN corepack enable
 WORKDIR /clawdbot
-# Pin to a known ref (tag/branch). Updated to OpenClaw v2026.2.15
-ARG CLAWDBOT_GIT_REF=v2026.2.15
+# Pin to a known ref (tag/branch). Updated to OpenClaw v2026.2.14
+ARG CLAWDBOT_GIT_REF=v2026.2.14
 RUN git clone --depth 1 --branch "${CLAWDBOT_GIT_REF}" https://github.com/openclaw/openclaw.git .
 # Patch: relax version requirements for packages that may reference unpublished versions.
 # Scope this narrowly to avoid surprising dependency mutations.
@@ -42,6 +42,8 @@ RUN apt-get update \
     ca-certificates \
     curl \
     gnupg \
+    jq \
+    ripgrep \
   && rm -rf /var/lib/apt/lists/*
 
 # Install ngrok for tunneling
@@ -59,6 +61,12 @@ RUN npm install -g @anthropic-ai/claude-code
 
 # Install Bird CLI for Twitter/X integration (https://github.com/steipete/bird)
 RUN npm install -g @steipete/bird
+
+# Install Todoist CLI for task management
+RUN npm install -g todoist-ts-cli@^0.2.0
+
+# Install trash-cli for safe file deletion (recoverable rm)
+RUN npm install -g trash-cli
 
 # Install gog CLI for Google services - Gmail, Calendar, Drive (https://github.com/steipete/gogcli)
 RUN curl -sL https://github.com/steipete/gogcli/releases/download/v0.9.0/gogcli_0.9.0_linux_amd64.tar.gz | tar -xz -C /usr/local/bin gog
