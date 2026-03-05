@@ -71,6 +71,9 @@ RUN npm install -g trash-cli
 # Install gog CLI for Google services - Gmail, Calendar, Drive (https://github.com/steipete/gogcli)
 RUN curl -sL https://github.com/steipete/gogcli/releases/download/v0.9.0/gogcli_0.9.0_linux_amd64.tar.gz | tar -xz -C /usr/local/bin gog
 
+# Install Google Workspace CLI for structured Workspace API access (https://github.com/googleworkspace/cli)
+RUN npm install -g @googleworkspace/cli
+
 WORKDIR /app
 # Wrapper deps
 COPY package.json ./
