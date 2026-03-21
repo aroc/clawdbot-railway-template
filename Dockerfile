@@ -84,6 +84,12 @@ RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /clawdbot/dist/entry.js "$@"'
 RUN openclaw browser extension install
 
 COPY src ./src
+
+# Create non-root user for Claude Code (--dangerously-skip-permissions requires non-root)
+RUN useradd -m -s /bin/bash claude-user \
+  && mkdir -p /data \
+  && chown -R claude-user:claude-user /data
+
 ENV PORT=8080
 EXPOSE 8080
 CMD ["node", "src/server.js"]
