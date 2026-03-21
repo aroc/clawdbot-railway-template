@@ -56,8 +56,8 @@ RUN curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | tee /etc/apt/truste
 # Install Playwright with bundled Chromium for browser automation
 RUN npm install -g playwright && npx playwright install --with-deps chromium
 
-# Install Claude Code CLI for debugging and maintenance
-RUN npm install -g @anthropic-ai/claude-code
+# Install Claude Code CLI (native installer, auto-updates)
+RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Install Bird CLI for Twitter/X integration (https://github.com/steipete/bird)
 RUN npm install -g @steipete/bird
