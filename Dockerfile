@@ -56,9 +56,6 @@ RUN curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | tee /etc/apt/truste
 # Install Playwright with bundled Chromium for browser automation
 RUN npm install -g playwright && npx playwright install --with-deps chromium
 
-# Install Claude Code CLI (native installer, auto-updates)
-RUN curl -fsSL https://claude.ai/install.sh | bash
-
 # Install Bird CLI for Twitter/X integration (https://github.com/steipete/bird)
 RUN npm install -g @steipete/bird
 
@@ -85,11 +82,26 @@ RUN openclaw browser extension install
 
 COPY src ./src
 
-# Create non-root user for Claude Code (--dangerously-skip-permissions requires non-root)
-RUN useradd -m -s /bin/bash claude-user \
-  && mkdir -p /data \
-  && chown -R claude-user:claude-user /data
+# Create non-root user with pinned UID for stable volume permissions across rebuilds
+RUN groupadd -g 1500 appgroup \
+  && useradd -u 1500 -g appgroup -m -s /bin/bash claude-user \
+  && usermod -aG appgroup root
+
+# Install Claude Code as claude-user (installs to ~claude-user, avoids /root access issues)
+USER claude-user
+RUN curl -fsSL https://claude.ai/install.sh | bash
+USER root
+
+# Entrypoint: set up shared group + setgid on /data volume (fast, no recursive chown)
+RUN printf '%s\n' \
+  '#!/usr/bin/env bash' \
+  'chgrp appgroup /data 2>/dev/null || true' \
+  'chmod 2775 /data 2>/dev/null || true' \
+  'umask 002' \
+  'exec "$@"' \
+  > /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
 
 ENV PORT=8080
 EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["node", "src/server.js"]
