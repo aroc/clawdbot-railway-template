@@ -40,6 +40,7 @@ ENV NODE_ENV=production
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ca-certificates \
+    cron \
     curl \
     gnupg \
     jq \
@@ -98,6 +99,10 @@ RUN printf '%s\n' \
   'chgrp appgroup /data 2>/dev/null || true' \
   'chmod 2775 /data 2>/dev/null || true' \
   'umask 002' \
+  '# Set up system cron jobs (idempotent, safe to re-run)' \
+  'if [ -x /data/workspace/scripts/setup-system-crons.sh ]; then' \
+  '  /data/workspace/scripts/setup-system-crons.sh || true' \
+  'fi' \
   'exec "$@"' \
   > /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
 
