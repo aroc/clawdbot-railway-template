@@ -44,6 +44,7 @@ RUN apt-get update \
     curl \
     gnupg \
     jq \
+    nano \
     ripgrep \
   && rm -rf /var/lib/apt/lists/*
 
@@ -71,6 +72,9 @@ RUN curl -sL https://github.com/steipete/gogcli/releases/download/v0.9.0/gogcli_
 
 # Install Google Workspace CLI for structured Workspace API access (https://github.com/googleworkspace/cli)
 RUN npm install -g @googleworkspace/cli
+
+# Install Codex CLI (https://github.com/openai/codex)
+RUN npm install -g @openai/codex
 
 WORKDIR /app
 # Wrapper deps
